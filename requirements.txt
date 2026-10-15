@@ -1,0 +1,9 @@
+# Runtime (what the deployed app needs)
+langchain-core==1.6.10
+langchain-chroma==1.1.0
+langchain-google-genai==4.4.2
+fastembed==0.9.0
+fastapi==0.143.1
+uvicorn[standard]==0.54.0
+python-dotenv==1.2.4
+gradio==6.30.0

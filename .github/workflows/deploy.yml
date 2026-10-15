@@ -1,0 +1,51 @@
+name: Deploy
+
+# Runs when you publish a GitHub Release (for example tag v1.0.0).
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.RENDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Render deploy of this release's commit
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          case "$HOOK" in *\?*) sep="&" ;; *) sep="?" ;; esac
+          code=$(curl -sS -o response.txt -w "%{http_code}" "${HOOK}${sep}ref=${{ github.sha }}")
+          cat response.txt; echo
+          if [ "$code" != "200" ] && [ "$code" != "202" ]; then
+            echo "Render deploy hook returned HTTP $code" >&2
+            exit 1
+          fi
+
+      - name: Wait until the new version is live
+        run: scripts/wait_for_deploy.sh "${{ vars.RENDER_URL }}" "${{ github.sha }}" 1500
+
+      - name: Show the link
+        run: |
+          {
+            echo "### Deployed ${{ github.event.release.tag_name }}"
+            echo ""
+            echo "Live at: ${{ vars.RENDER_URL }}"
+          } >> "$GITHUB_STEP_SUMMARY"

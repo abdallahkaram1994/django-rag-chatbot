@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: django-docs-qa
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    autoDeployTrigger: "off"  # deploys are triggered by the release workflow
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false

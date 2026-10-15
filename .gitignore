@@ -1,0 +1,31 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets (API keys). .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# Generated or downloaded locally (rebuilt by scripts/build_index.py or at deploy)
+models/
+chroma_prefix/
+.gradio/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+__MACOSX/

@@ -1,0 +1,41 @@
+{"id": 1, "question": "How do I create a custom user model?", "accept": [{"source": "topics/auth/customizing.txt", "section_contains": "Using a custom user model when starting a project"}]}
+{"id": 2, "question": "How do I make sure several database queries either all succeed or all roll back?", "accept": [{"source": "topics/db/transactions.txt", "section_contains": "Controlling transactions explicitly"}]}
+{"id": 3, "question": "How do I fetch related objects in the same query to avoid extra database hits?", "accept": [{"source": "ref/models/querysets.txt", "section_contains": "select_related()"}]}
+{"id": 4, "question": "How can I avoid the N+1 problem when loading many-to-many or reverse relations?", "accept": [{"source": "ref/models/querysets.txt", "section_contains": "prefetch_related()"}]}
+{"id": 5, "question": "How do I write a migration that changes existing data instead of the schema?", "accept": [{"source": "topics/migrations.txt", "section_contains": "Data Migrations"}]}
+{"id": 6, "question": "How do I protect my forms against CSRF attacks?", "accept": [{"source": "howto/csrf.txt", "section_contains": "CSRF protection"}]}
+{"id": 7, "question": "How do I serve static files while running the development server?", "accept": [{"source": "howto/static-files/index.txt", "section_contains": "Serving static files during development"}]}
+{"id": 8, "question": "How do I configure Redis as my cache backend?", "accept": [{"source": "topics/cache.txt", "section_contains": "Redis"}]}
+{"id": 9, "question": "How do I cache the output of a single view?", "accept": [{"source": "topics/cache.txt", "section_contains": "per-view cache"}]}
+{"id": 10, "question": "How do I write my own middleware?", "accept": [{"source": "topics/http/middleware.txt", "section_contains": "Writing your own middleware"}]}
+{"id": 11, "question": "How do I handle a file uploaded through a form?", "accept": [{"source": "topics/http/file-uploads.txt", "section_contains": "Basic file uploads"}]}
+{"id": 12, "question": "How do I send an email from Django?", "accept": [{"source": "topics/email.txt", "section_contains": "send_mail()"}]}
+{"id": 13, "question": "How do I store data for a visitor between requests?", "accept": [{"source": "topics/http/sessions.txt", "section_contains": "Using sessions in views"}]}
+{"id": 14, "question": "How do I test my views without running a real server?", "accept": [{"source": "topics/testing/tools.txt", "section_contains": "The test client"}, {"source": "intro/tutorial05.txt", "section_contains": "Testing our new view"}]}
+{"id": 15, "question": "How do I create a custom template tag?", "accept": [{"source": "howto/custom-template-tags.txt", "section_contains": "Simple tags"}, {"source": "howto/custom-template-tags.txt", "section_contains": ""}]}
+{"id": 16, "question": "How do I count related objects for every row in a queryset?", "accept": [{"source": "topics/db/aggregation.txt", "section_contains": "Generating aggregates for each item"}]}
+{"id": 17, "question": "How do I combine filter conditions with OR?", "accept": [{"source": "topics/db/queries.txt", "section_contains": "Complex lookups with"}]}
+{"id": 18, "question": "How do I increment a field in the database without a race condition?", "accept": [{"source": "ref/models/expressions.txt", "section_contains": "F()"}]}
+{"id": 19, "question": "How do I paginate a ListView?", "accept": [{"source": "topics/pagination.txt", "section_contains": "Paginating a"}]}
+{"id": 20, "question": "How do I run code when a model is saved?", "accept": [{"source": "topics/signals.txt", "section_contains": "Connecting receiver functions"}]}
+{"id": 21, "question": "How do I enforce that a combination of fields is unique?", "accept": [{"source": "ref/models/constraints.txt", "section_contains": "UniqueConstraint"}]}
+{"id": 22, "question": "How do I restrict a view to logged-in users?", "accept": [{"source": "topics/auth/default.txt", "section_contains": "Limiting access to logged-in users"}]}
+{"id": 23, "question": "Which password hashing algorithms does Django support?", "accept": [{"source": "topics/auth/passwords.txt", "section_contains": "Included hashers"}, {"source": "topics/auth/passwords.txt", "section_contains": "How Django stores passwords"}]}
+{"id": 24, "question": "How do I build a form directly from a model?", "accept": [{"source": "topics/forms/modelforms.txt", "section_contains": "ModelForm"}, {"source": "topics/forms/modelforms.txt", "section_contains": "Creating forms from models"}]}
+{"id": 25, "question": "How do I call async code from a synchronous view?", "accept": [{"source": "topics/async.txt", "section_contains": "async_to_sync()"}]}
+{"id": 26, "question": "How do I add a database index to a model?", "accept": [{"source": "ref/models/indexes.txt", "section_contains": "Model index reference"}]}
+{"id": 27, "question": "How do I mark strings for translation in Python code?", "accept": [{"source": "topics/i18n/translation.txt", "section_contains": "Standard translation"}]}
+{"id": 28, "question": "Can I run raw SQL queries and map them to model instances?", "accept": [{"source": "topics/db/sql.txt", "section_contains": "Performing raw SQL queries"}]}
+{"id": 29, "question": "How do I write my own model field type?", "accept": [{"source": "howto/custom-model-fields.txt", "section_contains": "How to create custom model fields"}]}
+{"id": 30, "question": "What settings should I change before deploying to production?", "accept": [{"source": "howto/deployment/checklist.txt", "section_contains": "Critical settings"}]}
+{"id": 31, "question": "How do I add my own manage.py command?", "accept": [{"source": "howto/custom-management-commands.txt", "section_contains": "How to create custom"}]}
+{"id": 32, "question": "How do I enforce password strength rules?", "accept": [{"source": "topics/auth/passwords.txt", "section_contains": "Enabling password validation"}]}
+{"id": 33, "question": "How do I collect static files into one folder for deployment?", "accept": [{"source": "ref/contrib/staticfiles.txt", "section_contains": "collectstatic"}, {"source": "howto/static-files/index.txt", "section_contains": "Deployment"}, {"source": "howto/static-files/deployment.txt", "section_contains": ""}]}
+{"id": 34, "question": "How do I query across a many-to-many relationship?", "accept": [{"source": "topics/db/queries.txt", "section_contains": "Many-to-many relationships"}, {"source": "topics/db/queries.txt", "section_contains": "Spanning multi-valued relationships"}]}
+{"id": 35, "question": "How do I update many rows at once without loading them?", "accept": [{"source": "topics/db/queries.txt", "section_contains": "Updating multiple objects at once"}, {"source": "ref/models/querysets.txt", "section_contains": "``update()``"}]}
+{"id": 36, "question": "What is the capital of France?", "accept": []}
+{"id": 37, "question": "How do I deploy a Flask app to Heroku?", "accept": []}
+{"id": 38, "question": "How do I use the useState hook in React?", "accept": []}
+{"id": 39, "question": "Give me a recipe for pancakes.", "accept": []}
+{"id": 40, "question": "How do I train a neural network in PyTorch?", "accept": []}
+{"id": 41, "question": "Who won the 2022 FIFA World Cup?", "accept": []}

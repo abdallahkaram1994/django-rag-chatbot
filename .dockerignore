@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.env
+.vscode
+.gradio
+__pycache__
+*.pyc
+__MACOSX
+docs
+evals
+scripts
+tests
+models
+chroma_prefix
+README.md

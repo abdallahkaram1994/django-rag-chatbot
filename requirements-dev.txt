@@ -1,0 +1,4 @@
+# Development: tests, evals, rebuilding the index
+-r requirements.txt
+langchain-text-splitters==1.1.3
+pytest==9.1.1
