@@ -2,7 +2,7 @@
 
 Ask a question about Django 5.2 and get an answer generated from the official documentation, with links to the exact sections it used. If the docs don't cover the question, it says so instead of guessing.
 
-**Live demo:** _add the Render URL here_ (free tier: the first request after idle can take about a minute to wake up)
+**Live demo:** [https://django-docs-qa.onrender.com](https://django-docs-qa.onrender.com)
 
 ## How it works
 
