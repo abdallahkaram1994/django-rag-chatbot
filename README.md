@@ -4,6 +4,8 @@ Ask a question about Django 5.2 and get an answer generated from the official do
 
 **Live demo:** [https://django-docs-qa.onrender.com](https://django-docs-qa.onrender.com)
 
+<img width="1901" height="1215" alt="image" src="https://github.com/user-attachments/assets/d2942be6-9f66-422c-bf8a-c0348c59be85" />
+
 ## How it works
 
 ```
