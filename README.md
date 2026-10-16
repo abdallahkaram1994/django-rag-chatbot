@@ -19,20 +19,6 @@ question -> embed -> top 5 chunks -> distance check -> Gemini -> answer + cited 
 - **Serving:** FastAPI (`POST /ask`, `GET /search`, `GET /health`, interactive docs at `/docs`) with the Gradio chat UI mounted at `/`. A per-IP and daily rate limit protects the free Gemini quota.
 - **Sources:** merged by section and linked to the section anchor on docs.djangoproject.com.
 
-## Evaluation
-
-`evals/questions.jsonl` holds 35 hand-labelled questions (each with the doc sections that count as a correct hit) and 6 out-of-scope questions.
-
-| Setup | hit@1 | hit@3 | hit@5 | MRR |
-|---|---|---|---|---|
-| bge-small via sentence-transformers (fp32) | 51% | 71% | 80% | 0.614 |
-| bge-small via fastembed (quantized ONNX) | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
-| + section title in embedded text | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
-
-Run it with `python -m scripts.eval_retrieval [store_folder]`.
-
-Known weakness: questions that don't use the docs' own vocabulary (for example "store data for a visitor between requests" when the docs say "sessions").
-
 ## Run locally
 
 ```bash
@@ -56,12 +42,6 @@ One-time setup:
 4. Publish a release: GitHub > Releases > Draft a new release, or `gh release create v1.0.0 --generate-notes`.
 
 The built `chroma/` index is committed, so deploys don't re-embed the docs.
-
-## Limitations
-
-- Each question is answered on its own, with no chat memory.
-- The rate limiter is in-memory and per instance.
-- The documentation covers Django 5.2 only.
 
 ## Credits
 

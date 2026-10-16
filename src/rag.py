@@ -61,7 +61,7 @@ def get_db() -> Chroma:
 def get_llm() -> ChatGoogleGenerativeAI:
     if not GEMINI_MODEL:
         raise RuntimeError("Set GEMINI_MODEL (and GOOGLE_API_KEY) in .env")
-    return ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0)
+    return ChatGoogleGenerativeAI(model=GEMINI_MODEL)
 
 
 def retrieve(question: str, k: int = TOP_K) -> list[tuple[Document, float]]:
@@ -109,28 +109,17 @@ def rewrite_followup(question: str, turns: list[dict]) -> str | None:
     return line if 3 <= len(line) <= 500 else None
 
 
-def pick_query(question: str, previous: str) -> str:
-    """Free follow-up handling: use whichever of 'question' or 'previous + question' retrieves closer."""
-    joined = f"{previous} {question}"
-    alone = retrieve(question, k=1)
-    together = retrieve(joined, k=1)
-    if alone and together and together[0][1] < alone[0][1]:
-        return joined
-    return question
-
-
 def resolve_query(question: str, history=None, mode: str | None = None) -> str:
-    """Turn the user's message into the query used for retrieval and generation."""
+    """Turn the user's message into the query used for retrieval and generation.
+
+    With chat history in "llm" mode, Gemini rewrites a follow-up into a standalone question.
+    If that is not possible (first message, no budget, an error), the question is used as typed.
+    """
     mode = mode or FOLLOWUP_MODE
     turns = recent_turns(history)
-    previous_questions = [t["content"] for t in turns if t["role"] == "user"]
-    if mode == "none" or not previous_questions:
-        return question  # first message: nothing to resolve, no extra call
-    if mode == "llm":
-        rewritten = rewrite_followup(question, turns)
-        if rewritten:
-            return rewritten
-    return pick_query(question, previous_questions[-1])
+    if mode != "llm" or not any(t["role"] == "user" for t in turns):
+        return question
+    return rewrite_followup(question, turns) or question
 
 
 def retrieval_only(results: list[tuple[Document, float]], query: str) -> dict:

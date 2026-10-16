@@ -42,23 +42,6 @@ def test_none_mode_ignores_history():
     assert rag.resolve_query("And with Redis?", history, mode="none") == "And with Redis?"
 
 
-def test_concat_picks_the_closer_candidate(monkeypatch):
-    history = chat(("How do I cache a view?", "Use cache_page."))
-
-    def retrieve(query, k=5):
-        return make_results([0.4 if "cache a view" in query else 0.8])
-
-    monkeypatch.setattr(rag, "retrieve", retrieve)
-    assert rag.resolve_query("And with Redis?", history, mode="concat") == "How do I cache a view? And with Redis?"
-
-    # A new, self-contained topic keeps its own query.
-    def retrieve_new_topic(query, k=5):
-        return make_results([0.3 if query == "How do I send email?" else 0.7])
-
-    monkeypatch.setattr(rag, "retrieve", retrieve_new_topic)
-    assert rag.resolve_query("How do I send email?", history, mode="concat") == "How do I send email?"
-
-
 def test_llm_mode_uses_rewrite(monkeypatch):
     history = chat(("How do I cache a view?", "Use cache_page."))
     llm = FakeLLM("How do I use Redis as the cache backend?\nextra line ignored")
@@ -67,22 +50,20 @@ def test_llm_mode_uses_rewrite(monkeypatch):
     assert llm.calls == 1
 
 
-def test_llm_mode_falls_back_to_concat_when_budget_is_empty(monkeypatch):
+def test_llm_mode_uses_question_as_typed_when_budget_is_empty(monkeypatch):
     history = chat(("How do I cache a view?", "Use cache_page."))
     llm = FakeLLM("should not be called")
     monkeypatch.setattr(rag, "get_llm", lambda: llm)
     monkeypatch.setattr(rag, "budget", GeminiBudget(daily=0, per_minute=10))
-    monkeypatch.setattr(rag, "retrieve", lambda q, k=5: make_results([0.4 if "cache a view" in q else 0.8]))
-    assert rag.resolve_query("And with Redis?", history, mode="llm").startswith("How do I cache a view?")
+    assert rag.resolve_query("And with Redis?", history, mode="llm") == "And with Redis?"
     assert llm.calls == 0
 
 
-def test_llm_mode_falls_back_when_rewrite_errors(monkeypatch):
+def test_llm_mode_uses_question_as_typed_when_rewrite_errors(monkeypatch):
     class Boom:
         def invoke(self, _m):
             raise RuntimeError("429")
 
     history = chat(("How do I cache a view?", "Use cache_page."))
     monkeypatch.setattr(rag, "get_llm", lambda: Boom())
-    monkeypatch.setattr(rag, "retrieve", lambda q, k=5: make_results([0.5]))
     assert rag.resolve_query("And with Redis?", history, mode="llm") == "And with Redis?"

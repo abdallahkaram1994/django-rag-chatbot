@@ -33,10 +33,9 @@ GEMINI_DAILY_BUDGET = int(os.getenv("GEMINI_DAILY_BUDGET", "400"))
 GEMINI_PER_MINUTE = int(os.getenv("GEMINI_PER_MINUTE", "12"))
 QUOTA_TIMEZONE = "America/Los_Angeles"
 
-# Follow-up questions. Modes: "none" (ignore history), "concat" (free, local: pick between the
-# question alone and previous question + question by retrieval distance), "llm" (Gemini rewrites
-# the follow-up into a standalone question; one extra call per follow-up).
-FOLLOWUP_MODE = os.getenv("FOLLOWUP_MODE", "concat")
+# Follow-up questions. "llm": Gemini rewrites a follow-up into a standalone question (one extra call,
+# only when there is chat history). "none": search with the question as typed.
+FOLLOWUP_MODE = os.getenv("FOLLOWUP_MODE", "llm")
 HISTORY_TURNS = int(os.getenv("HISTORY_TURNS", "3"))  # exchanges (user + assistant) kept
 
 CACHE_SIZE = int(os.getenv("CACHE_SIZE", "500"))
