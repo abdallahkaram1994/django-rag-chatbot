@@ -1,1 +1,180 @@
-{"answers": []}
+{
+  "answers": [
+    {
+      "question": "How do I create a custom user model?",
+      "result": {
+        "answer": "To create a custom user model in Django 5.2, the method depends on whether you want a custom user model from the start or a more customized one:\n\n* **Starting a new project with a model that behaves identically to the default:** Subclass `AbstractUser` [5]:\n  ```python\n  from django.contrib.auth.models import AbstractUser\n\n\n  class User(AbstractUser):\n      pass\n  ```\n  Remember to point `AUTH_USER_MODEL` to it before creating any migrations or running `manage.py migrate` for the first time, and register it in `admin.py` [5]:\n  ```python\n  from django.contrib import admin\n  from django.contrib.auth.admin import UserAdmin\n  from .models import User\n\n  admin.site.register(User, UserAdmin)\n  ```\n\n* **Constructing a compliant custom user model with specific details:** The easiest way is to inherit from `AbstractBaseUser`, which provides the core implementation like hashed passwords and tokenized password resets [2]. \n  * If you use the default authentication backend, your model must have a single unique identification field (such as a username or email address) [2].\n  * You will also need to write a custom manager (e.g., `CustomUserManager`) whose `create_user()` method accepts the username field plus all required fields [3]:\n    ```python\n    def create_user(self, email, date_of_birth, password=None):\n        # create user here\n        ...\n    ```\n\n* **Reusable apps:** Reusable apps should not implement a custom user model because projects cannot use multiple apps that each implement one [4]. Instead, use a `ForeignKey` or `OneToOneField` to `settings.AUTH_USER_MODEL` [4].\n\nThe excerpts do not cover the complete implementation details of `AbstractBaseUser` or how to configure the `AUTH_USER_MODEL` setting in `settings.py` (other than noting that it must point to your custom user model before running migrations [5]).",
+        "sources": [
+          {
+            "n": 1,
+            "source": "topics/auth/customizing.txt",
+            "section": "Customizing authentication in Django > Substituting a custom ``User`` model > Custom users and the built-in auth forms",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/auth/customizing/",
+            "distance": 0.391
+          },
+          {
+            "n": 2,
+            "source": "topics/auth/customizing.txt",
+            "section": "Customizing authentication in Django > Substituting a custom ``User`` model > Specifying a custom user model",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/auth/customizing/",
+            "distance": 0.396
+          },
+          {
+            "n": 3,
+            "source": "topics/auth/customizing.txt",
+            "section": "Customizing authentication in Django > Substituting a custom ``User`` model > Writing a manager for a custom user model",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/auth/customizing/",
+            "distance": 0.4
+          },
+          {
+            "n": 4,
+            "source": "topics/auth/customizing.txt",
+            "section": "Customizing authentication in Django > Substituting a custom ``User`` model > Reusable apps and ``AUTH_USER_MODEL``",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/auth/customizing/",
+            "distance": 0.416
+          },
+          {
+            "n": 5,
+            "source": "topics/auth/customizing.txt",
+            "section": "Customizing authentication in Django > Substituting a custom ``User`` model > Using a custom user model when starting a project",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/auth/customizing/",
+            "distance": 0.419
+          }
+        ],
+        "refused": false
+      }
+    },
+    {
+      "question": "How do I write a data migration?",
+      "result": {
+        "answer": "To write a data migration, follow these steps based on the excerpts:\n\n1. **Understand what they are:** Data migrations are used to change the data in the database itself (often alongside schema changes) and are best written as separate migrations alongside your schema migrations [2]. Django cannot automatically generate them for you [2].\n2. **Create an empty migration file:** Run `python manage.py makemigrations --empty yourappname` to have Django create an empty migration file in the correct place with a suggested name and necessary dependencies [2][5].\n3. **Use Operations:** Migration files are made up of operations [2]. For data migrations, the main operation you use is `RunPython` [2], which is available from the `django.db.migrations.operations` module [5].\n\n*(Note: The excerpts do not provide a complete code example showing a `RunPython` function inside a migration file, only explaining that you start with an empty migration and use `RunPython` [2][5].)*",
+        "sources": [
+          {
+            "n": 1,
+            "source": "howto/writing-migrations.txt",
+            "section": "How to create database migrations",
+            "url": "https://docs.djangoproject.com/en/5.2/howto/writing-migrations/",
+            "distance": 0.39
+          },
+          {
+            "n": 2,
+            "source": "topics/migrations.txt",
+            "section": "Migrations > Data Migrations",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/migrations/",
+            "distance": 0.425
+          },
+          {
+            "n": 3,
+            "source": "topics/migrations.txt",
+            "section": "Migrations > Migration files",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/migrations/",
+            "distance": 0.447
+          },
+          {
+            "n": 4,
+            "source": "topics/migrations.txt",
+            "section": "Migrations > The Commands",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/migrations/",
+            "distance": 0.479
+          },
+          {
+            "n": 5,
+            "source": "ref/migration-operations.txt",
+            "section": "Migration Operations",
+            "url": "https://docs.djangoproject.com/en/5.2/ref/migration-operations/",
+            "distance": 0.481
+          }
+        ],
+        "refused": false
+      }
+    },
+    {
+      "question": "How do I cache the output of a single view?",
+      "result": {
+        "answer": "To cache the output of an individual view in Django, you can use the `cache_page` decorator from `django.views.decorators.cache` [1]. \n\n`cache_page` takes the cache timeout in seconds as its first argument [1]. For example, to cache a view for 15 minutes (`60 * 15` seconds):\n\n```python\nfrom django.views.decorators.cache import cache_page\n\n\n@cache_page(60 * 15)\ndef my_view(request):\n    ...\n```\n\nThe timeout set by `cache_page` takes precedence over the `max-age` directive from the `Cache-Control` header [1].\n\nAdditionally, `cache_page` accepts optional keyword arguments:\n* `cache`: Directs the decorator to use a specific cache from your `CACHES` setting (defaults to `default`) [2].\n* `key_prefix`: Used to specify a key prefix [1].\n\nExample using a specific cache [2]:\n```python\n@cache_page(60 * 15, cache=\"special_cache\")\ndef my_view(request):\n    ...\n```\n\nPer-view caches are keyed off of the URL; if multiple URLs point to the same view, each URL is cached separately [2].",
+        "sources": [
+          {
+            "n": 1,
+            "source": "topics/cache.txt",
+            "section": "Django's cache framework > The per-view cache",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/cache/",
+            "distance": 0.501
+          },
+          {
+            "n": 2,
+            "source": "topics/cache.txt",
+            "section": "Django's cache framework > The per-view cache",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/cache/",
+            "distance": 0.502
+          },
+          {
+            "n": 3,
+            "source": "topics/cache.txt",
+            "section": "Django's cache framework > Controlling cache: Using other headers",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/cache/",
+            "distance": 0.529
+          },
+          {
+            "n": 4,
+            "source": "topics/cache.txt",
+            "section": "Django's cache framework > Template fragment caching",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/cache/",
+            "distance": 0.535
+          },
+          {
+            "n": 5,
+            "source": "topics/cache.txt",
+            "section": "Django's cache framework > The low-level cache API",
+            "url": "https://docs.djangoproject.com/en/5.2/topics/cache/",
+            "distance": 0.55
+          }
+        ],
+        "refused": false
+      }
+    },
+    {
+      "question": "What settings should I change before deploying to production?",
+      "result": {
+        "answer": "Before deploying to production, you should review your settings with security, performance, and operations in mind [3]. The deployment checklist includes settings that:\n\n* Must be set properly for security [4]\n* Are expected to be different in each environment [4]\n* Enable optional security features [4]\n* Enable performance optimizations [4]\n* Provide error reporting [4]\n\nA critical setting to change is `DEBUG`:\n* You must **never** enable `DEBUG` in production (i.e., `DEBUG = False`) [2]. Leaving it enabled is a security risk because it leaks source code excerpts, local variables, settings, and library information [2].\n\nYou can automate some of the deployment checks by running `manage.py check --deploy` against your production settings file [1]. \n\nAdditionally, many of these settings are sensitive and should be treated as confidential; a common practice is to use a private settings module for production rather than publishing them [4].\n\n*(Note: The provided excerpts mention that settings should be reviewed for security, performance, and operations, but they do not provide an exhaustive list of every specific setting name other than `DEBUG`.)*",
+        "sources": [
+          {
+            "n": 1,
+            "source": "howto/deployment/checklist.txt",
+            "section": "Deployment checklist > Run ``manage.py check --deploy``",
+            "url": "https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/",
+            "distance": 0.519
+          },
+          {
+            "n": 2,
+            "source": "howto/deployment/checklist.txt",
+            "section": "Deployment checklist > Critical settings > :setting:`DEBUG`",
+            "url": "https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/",
+            "distance": 0.537
+          },
+          {
+            "n": 3,
+            "source": "howto/deployment/checklist.txt",
+            "section": "Deployment checklist",
+            "url": "https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/",
+            "distance": 0.566
+          },
+          {
+            "n": 4,
+            "source": "howto/deployment/checklist.txt",
+            "section": "Deployment checklist",
+            "url": "https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/",
+            "distance": 0.604
+          },
+          {
+            "n": 5,
+            "source": "ref/contrib/gis/install/postgis.txt",
+            "section": "Installing PostGIS > Post-installation",
+            "url": "https://docs.djangoproject.com/en/5.2/ref/contrib/gis/install/postgis/",
+            "distance": 0.615
+          }
+        ],
+        "refused": false
+      }
+    }
+  ]
+}
