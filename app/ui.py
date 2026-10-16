@@ -117,7 +117,7 @@ def respond(message: str, history: list, request: gr.Request | None = None) -> s
     if reason:
         return reason
     try:
-        return format_reply(answer(message))
+        return format_reply(answer(message, history))
     except Exception:
         logger.exception("respond failed")
         return "Something went wrong generating an answer. Please try again in a moment."
@@ -134,8 +134,9 @@ def build_ui() -> gr.ChatInterface:
         title="Django Docs Q&A",
         description=(
             "Ask a question about Django 5.2. Answers are generated from the official "
-            "documentation and cite their sources. Each question is answered on its own; "
-            "earlier messages are not used as context."
+            "documentation and cite their sources. You can ask follow-up questions. "
+            "This is a free demo with a small shared AI quota, so if it runs out you will "
+            "see the relevant documentation sections instead of a written answer."
         ),
         examples=EXAMPLES,
         cache_examples=False,

@@ -22,6 +22,22 @@ MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.6"))
 # Copy the model name from Google AI Studio into .env (GEMINI_MODEL=...).
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "")
 
-# Rate limiting (protects the free Gemini quota).
-RATE_PER_MINUTE = int(os.getenv("RATE_PER_MINUTE", "10"))  # per client IP
-DAILY_CAP = int(os.getenv("DAILY_CAP", "300"))  # all clients combined
+# Per-visitor limits (by client IP).
+RATE_PER_MINUTE = int(os.getenv("RATE_PER_MINUTE", "10"))
+IP_DAILY_CAP = int(os.getenv("IP_DAILY_CAP", "40"))
+
+# Shared Gemini budget, counted in Gemini calls across all visitors. Keep both a bit under
+# the free-tier limits shown in AI Studio (gemini-3.5-flash-lite: 500/day, 15/min), so the
+# owner's own testing still fits. The quota day resets at midnight Pacific time.
+GEMINI_DAILY_BUDGET = int(os.getenv("GEMINI_DAILY_BUDGET", "400"))
+GEMINI_PER_MINUTE = int(os.getenv("GEMINI_PER_MINUTE", "12"))
+QUOTA_TIMEZONE = "America/Los_Angeles"
+
+# Follow-up questions. Modes: "none" (ignore history), "concat" (free, local: pick between the
+# question alone and previous question + question by retrieval distance), "llm" (Gemini rewrites
+# the follow-up into a standalone question; one extra call per follow-up).
+FOLLOWUP_MODE = os.getenv("FOLLOWUP_MODE", "concat")
+HISTORY_TURNS = int(os.getenv("HISTORY_TURNS", "3"))  # exchanges (user + assistant) kept
+
+CACHE_SIZE = int(os.getenv("CACHE_SIZE", "500"))
+CACHE_SEED = ROOT / "cache" / "seed.json"

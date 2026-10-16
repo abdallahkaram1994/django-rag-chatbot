@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
 COPY app ./app
 COPY chroma ./chroma
+COPY cache ./cache
 
 # Download the embedding model at build time so the container never has to at startup.
 RUN python -c "from src.embeddings import get_embedder; get_embedder()"

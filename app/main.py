@@ -1,12 +1,14 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from src.config import CACHE_SEED
 from src.ratelimit import client_ip, limiter
-from src.rag import answer, get_db, get_llm, retrieve, sources_from
+from src.rag import answer, cache, get_db, get_llm, retrieve, sources_from
 
 logger = logging.getLogger("app")
 
@@ -15,6 +17,7 @@ logger = logging.getLogger("app")
 async def lifespan(_app: FastAPI):
     # Load the embedding model and open the index now, not on the first question.
     get_db()
+    logger.info("loaded %d seeded answers", cache.load_seed(CACHE_SEED))
     try:
         get_llm()
     except RuntimeError as exc:
@@ -36,8 +39,15 @@ def enforce_rate_limit(request: Request) -> None:
         raise HTTPException(status_code=429, detail=reason)
 
 
+class Turn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=4000)
+
+
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
+    # Earlier messages in this chat, oldest first. Optional; only the last few exchanges are used.
+    history: list[Turn] = Field(default_factory=list, max_length=20)
 
 
 class Source(BaseModel):
@@ -52,6 +62,8 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
     refused: bool
+    degraded: bool = False  # True when the daily AI quota was used up and only sources are returned
+    query: str | None = None  # the standalone query actually used for search (differs on follow-ups)
 
 
 class SearchHit(Source):
@@ -72,7 +84,7 @@ def version() -> dict:
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(enforce_rate_limit)])
 def ask(req: AskRequest) -> dict:
     try:
-        return answer(req.question)
+        return answer(req.question, [t.model_dump() for t in req.history])
     except Exception:
         logger.exception("ask failed")
         raise HTTPException(status_code=502, detail="Could not generate an answer right now.")

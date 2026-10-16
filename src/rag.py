@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 from langchain_chroma import Chroma
@@ -5,14 +6,26 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from src.config import CHROMA_PATH, GEMINI_MODEL, MAX_DISTANCE, TOP_K
+from src.budget import budget
+from src.cache import AnswerCache
+from src.config import CACHE_SIZE, CHROMA_PATH, FOLLOWUP_MODE, GEMINI_MODEL, MAX_DISTANCE, TOP_K
 from src.embeddings import get_embedder
+from src.followup import REWRITE_PROMPT, format_history, recent_turns
+
+logger = logging.getLogger("app.rag")
+
+cache = AnswerCache(CACHE_SIZE)
 
 DOCS_BASE = "https://docs.djangoproject.com/en/5.2/"
 
 NOT_COVERED = (
     "I couldn't find this in the Django 5.2 documentation. "
     "Try rephrasing, or ask about a specific Django feature."
+)
+
+DEGRADED_NOTICE = (
+    "I can't generate an answer right now (this free demo has a small shared AI quota), "
+    "so here are the most relevant documentation sections instead:"
 )
 
 PROMPT = ChatPromptTemplate.from_messages(
@@ -82,14 +95,79 @@ def sources_from(results: list[tuple[Document, float]]) -> list[dict]:
     ]
 
 
-def answer(question: str) -> dict:
-    results = retrieve(question)
-    if not results or results[0][1] > MAX_DISTANCE:
-        return {"answer": NOT_COVERED, "sources": [], "refused": True}
+def rewrite_followup(question: str, turns: list[dict]) -> str | None:
+    """Ask Gemini for a standalone version of a follow-up. None if it fails or looks wrong."""
+    if not budget.try_acquire():
+        return None
+    try:
+        messages = REWRITE_PROMPT.format_messages(history=format_history(turns), question=question)
+        text = get_llm().invoke(messages).text.strip()
+    except Exception:
+        logger.exception("follow-up rewrite failed")
+        return None
+    line = text.splitlines()[0].strip() if text else ""
+    return line if 3 <= len(line) <= 500 else None
 
-    messages = PROMPT.format_messages(context=build_context(results), question=question)
-    text = get_llm().invoke(messages).text.strip()
+
+def pick_query(question: str, previous: str) -> str:
+    """Free follow-up handling: use whichever of 'question' or 'previous + question' retrieves closer."""
+    joined = f"{previous} {question}"
+    alone = retrieve(question, k=1)
+    together = retrieve(joined, k=1)
+    if alone and together and together[0][1] < alone[0][1]:
+        return joined
+    return question
+
+
+def resolve_query(question: str, history=None, mode: str | None = None) -> str:
+    """Turn the user's message into the query used for retrieval and generation."""
+    mode = mode or FOLLOWUP_MODE
+    turns = recent_turns(history)
+    previous_questions = [t["content"] for t in turns if t["role"] == "user"]
+    if mode == "none" or not previous_questions:
+        return question  # first message: nothing to resolve, no extra call
+    if mode == "llm":
+        rewritten = rewrite_followup(question, turns)
+        if rewritten:
+            return rewritten
+    return pick_query(question, previous_questions[-1])
+
+
+def retrieval_only(results: list[tuple[Document, float]], query: str) -> dict:
+    """Used when no Gemini call is available: show the best-matching sections instead of an answer."""
+    return {
+        "answer": DEGRADED_NOTICE,
+        "sources": sources_from(results[:3]),
+        "refused": False,
+        "degraded": True,
+        "query": query,
+    }
+
+
+def answer(question: str, history=None, mode: str | None = None) -> dict:
+    query = resolve_query(question, history, mode)
+
+    hit = cache.get(query)
+    if hit is not None:
+        return {**hit, "degraded": False, "query": query}
+
+    results = retrieve(query)
+    if not results or results[0][1] > MAX_DISTANCE:
+        return {"answer": NOT_COVERED, "sources": [], "refused": True, "degraded": False, "query": query}
+
+    if not budget.try_acquire():
+        return retrieval_only(results, query)
+    try:
+        messages = PROMPT.format_messages(context=build_context(results), question=query)
+        text = get_llm().invoke(messages).text.strip()
+    except Exception:
+        # Quota exhausted on Google's side, network trouble, or a missing key: still show something useful.
+        logger.exception("generation failed")
+        return retrieval_only(results, query)
 
     if text.startswith("NOT_COVERED"):
-        return {"answer": NOT_COVERED, "sources": [], "refused": True}
-    return {"answer": text, "sources": sources_from(results), "refused": False}
+        result = {"answer": NOT_COVERED, "sources": [], "refused": True}
+    else:
+        result = {"answer": text, "sources": sources_from(results), "refused": False}
+    cache.put(query, result)
+    return {**result, "degraded": False, "query": query}

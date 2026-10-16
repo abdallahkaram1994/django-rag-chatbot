@@ -2,17 +2,17 @@ import threading
 import time
 from collections import defaultdict, deque
 
-from src.config import DAILY_CAP, RATE_PER_MINUTE
+from src.config import IP_DAILY_CAP, RATE_PER_MINUTE
 
 TOO_FAST = "Too many questions, please wait a minute and try again."
-DAILY_LIMIT = "The demo has reached its daily question limit. Please try again tomorrow."
+DAILY_LIMIT = "You have reached the daily question limit for this demo. Please try again tomorrow."
 
 
 class RateLimiter:
-    """In-memory sliding-window limiter: N per minute per client, plus a daily cap overall.
+    """In-memory sliding-window limiter: N per minute and N per day, per client.
 
-    State lives in this process, so it resets on restart and is per instance.
-    That is fine for a single-instance demo.
+    This keeps one visitor from using up the shared Gemini budget (src/budget.py, which
+    counts all visitors together). State lives in this process, so it resets on restart.
     """
 
     def __init__(self, per_minute: int, daily_cap: int, clock=time.monotonic):
@@ -21,32 +21,31 @@ class RateLimiter:
         self._clock = clock
         self._lock = threading.Lock()
         self._per_client: dict[str, deque] = defaultdict(deque)
-        self._all: deque = deque()
 
     def check(self, client: str) -> str | None:
         """Record a request. Returns None if allowed, or the message to show if not."""
         now = self._clock()
         with self._lock:
-            while self._all and now - self._all[0] > 86400:
-                self._all.popleft()
-            if len(self._all) >= self.daily_cap:
+            history = self._per_client[client]
+            while history and now - history[0] > 86400:
+                history.popleft()
+            if len(history) >= self.daily_cap:
                 return DAILY_LIMIT
-
-            recent = self._per_client[client]
-            while recent and now - recent[0] > 60:
-                recent.popleft()
-            if len(recent) >= self.per_minute:
+            if sum(1 for t in history if now - t <= 60) >= self.per_minute:
                 return TOO_FAST
 
-            recent.append(now)
-            self._all.append(now)
+            history.append(now)
+            if len(self._per_client) > 5000:  # forget clients with no requests in the last day
+                self._per_client = defaultdict(
+                    deque, {c: h for c, h in self._per_client.items() if h and now - h[-1] <= 86400}
+                )
             return None
 
 
 def client_ip(headers, fallback: str | None) -> str:
     """First X-Forwarded-For entry (hosts put the real client there), else the socket address.
 
-    A client can fake this header, which is why the daily cap exists as a backstop.
+    A client can fake this header, which is why the shared Gemini budget exists as a backstop.
     """
     forwarded = headers.get("x-forwarded-for", "")
     if forwarded:
@@ -54,4 +53,4 @@ def client_ip(headers, fallback: str | None) -> str:
     return fallback or "unknown"
 
 
-limiter = RateLimiter(RATE_PER_MINUTE, DAILY_CAP)
+limiter = RateLimiter(RATE_PER_MINUTE, IP_DAILY_CAP)

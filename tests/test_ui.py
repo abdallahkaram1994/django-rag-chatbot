@@ -57,3 +57,16 @@ def test_unclosed_fence_is_closed():
 def test_well_formed_text_is_unchanged():
     ok = "text\n\n```python\nx = 1\n```\n\nmore"
     assert ui.normalize_fences(ok) == ok
+
+
+def test_respond_passes_history_to_answer(monkeypatch):
+    seen = {}
+
+    def fake(message, history=None):
+        seen["history"] = history
+        return {"answer": "ok", "sources": [], "refused": False}
+
+    monkeypatch.setattr(ui, "answer", fake)
+    history = [{"role": "user", "content": "q"}, {"role": "assistant", "content": "a"}]
+    assert ui.respond("a follow-up question", history) == "ok"
+    assert seen["history"] == history

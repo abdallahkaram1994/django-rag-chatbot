@@ -7,3 +7,4 @@ fastapi==0.143.1
 uvicorn[standard]==0.54.0
 python-dotenv==1.2.4
 gradio==6.30.0
+tzdata==2025.2  # time zone data for the Gemini quota reset (slim images may lack it)
